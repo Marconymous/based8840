@@ -1,0 +1,46 @@
+# Runs `based8840 verify` on every project in this repo that must pass. Findings show up as
+# inline annotations on the pull request (--output github).
+# examples/violations is left out on purpose: it fails every step by design.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: tools/based8840
+            args: --full
+            needs-atlas: false
+          - project: examples/library
+            args: --full --atlas-env dev
+            needs-atlas: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/uv.lock"
+
+      - uses: ariga/setup-atlas@v0
+        if: matrix.needs-atlas
+
+      - name: based8840 verify
+        run: >-
+          uv run --project tools/based8840 based8840 verify
+          ${{ matrix.args }} --output github ${{ matrix.project }}

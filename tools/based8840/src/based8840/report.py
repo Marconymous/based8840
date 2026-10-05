@@ -64,7 +64,7 @@ def print_findings(console: Console, results: Sequence[StepResult]) -> None:
         )
 
 
-def print_summary(console: Console, results: Sequence[StepResult], *, is_full: bool) -> None:
+def print_summary(console: Console, results: Sequence[StepResult], *, notes: Sequence[str]) -> None:
     table: Table = Table(box=box.ROUNDED, title="based8840 verify", title_justify="left")
     table.add_column("Step")
     table.add_column("Status")
@@ -81,8 +81,8 @@ def print_summary(console: Console, results: Sequence[StepResult], *, is_full: b
         )
     console.print()
     console.print(table)
-    if not is_full:
-        console.print(Text("Layer checks skipped. Run `based8840 verify --full`.", style="dim"))
+    for note in notes:
+        console.print(Text(note, style="dim"))
     console.print(
         Panel(
             Text("\n".join(f"• {item}" for item in MANUAL_REVIEW), style="dim"),

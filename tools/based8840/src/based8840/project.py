@@ -9,7 +9,7 @@ from based8840.errors import PackageNotFoundError, ProjectNotFoundError
 def find_project_dir(start: Path) -> Path:
     """Nearest directory, from `start` upwards, whose `pyproject.toml` has a `[project]` table."""
     candidates: list[Path] = [start, *start.parents]
-    project_dir: Path | None = next((path for path in candidates if _is_project(path)), None)
+    project_dir: Path | None = next((path for path in candidates if is_project(path)), None)
     if project_dir is None:
         raise ProjectNotFoundError(
             f"No pyproject.toml with a [project] table in {start} or its parents."
@@ -33,7 +33,7 @@ def detect_package(project_dir: Path) -> str:
     return packages[0]
 
 
-def _is_project(directory: Path) -> bool:
+def is_project(directory: Path) -> bool:
     pyproject: Path = directory / "pyproject.toml"
     if not pyproject.is_file():
         return False

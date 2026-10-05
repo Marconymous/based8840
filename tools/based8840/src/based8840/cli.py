@@ -1,62 +1,59 @@
-"""`based8840` command line: `verify` runs every deterministic check, `format` runs ruff format."""
+"""`based8840` command line: parses arguments and runs the chosen command."""
 
 import argparse
 import sys
-import time
-from collections.abc import Callable, Sequence
-from dataclasses import replace
-from functools import partial
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Final
+from typing import Final, NoReturn, override
 
 from rich.console import Console
 from rich.text import Text
 
 from based8840.errors import Based8840Error
-from based8840.findings import Finding, StepOutcome, StepResult, StepStatus, step_status
-from based8840.project import detect_package, find_project_dir
-from based8840.report import print_findings, print_path, print_step, print_summary
-from based8840.rules import (
-    constants,
-    dependencies,
-    enums,
-    ignores,
-    layers,
-    models,
-    rebinding,
-    signatures,
-)
-from based8840.source import SourceModule, load_source_modules
-from based8840.steps import basedpyright, pytest, ruff_format, ruff_lint
-from based8840.steps.command import CommandOutput, relative_path, run_command
+from based8840.explain import explain_rule, list_rules
+from based8840.fix import fix_project
+from based8840.init import init_project
+from based8840.project import find_project_dir
+from based8840.report import print_path
+from based8840.steps import ruff_format
+from based8840.steps.command import CommandOutput, run_command
+from based8840.verify import OUTPUT_FORMATS, VerifyOptions, verify_project
 
-COMMANDS: Final = frozenset({"verify", "format"})
-DEFAULT_COMMAND: Final = "verify"
 ERROR_TAIL_LINES: Final = 40
 USAGE_ERROR_EXIT_CODE: Final = 2
-RULE_CHECKS: Final = [
-    signatures.check,
-    constants.check,
-    models.check,
-    dependencies.check,
-    enums.check,
-    rebinding.check,
-    ignores.check,
-]
-
-type Parser = Callable[[CommandOutput], list[Finding]]
-type Action = Callable[[], StepOutcome]
 
 
 class Arguments(argparse.Namespace):
     command: str
     project_dir: Path
     is_full: bool
+    atlas_env: str
+    changed_base: str
+    output: str
+    is_forced: bool
+    code: str
+
+
+@dataclass(frozen=True, slots=True)
+class Parsers:
+    root: argparse.ArgumentParser
+    commands: Mapping[str, argparse.ArgumentParser]
+
+
+class UsageParser(argparse.ArgumentParser):
+    """Prints the full help, not only the one-line usage, before a usage error."""
+
+    @override
+    def error(self, message: str) -> NoReturn:
+        self.print_help(sys.stderr)
+        self.exit(USAGE_ERROR_EXIT_CODE, f"\n{self.prog}: error: {message}\n")
 
 
 def main() -> None:
     arguments: Arguments = parse_arguments(sys.argv[1:])
-    console: Console = Console()
+    # JSON goes to stdout, so everything rich prints moves to stderr.
+    console: Console = Console(stderr=getattr(arguments, "output", "") == "json")
     try:
         exit_code: int = run(arguments, console=console)
     except Based8840Error as error:
@@ -66,18 +63,41 @@ def main() -> None:
 
 
 def parse_arguments(argv: Sequence[str]) -> Arguments:
-    """`verify` is the default, so `based8840` and `based8840 -f` work without naming it."""
-    is_command_given: bool = bool(argv) and (argv[0] in COMMANDS or argv[0] in {"-h", "--help"})
-    full_argv: list[str] = list(argv) if is_command_given else [DEFAULT_COMMAND, *argv]
-    return _build_parser().parse_args(full_argv, namespace=Arguments())
+    parsers: Parsers = _build_parsers()
+    if not argv:
+        parsers.root.error("no command given")
+    # parse_known_args so leftovers are reported with the command's help, not the root's.
+    arguments, extras = parsers.root.parse_known_args(argv, namespace=Arguments())
+    command_parser: argparse.ArgumentParser = parsers.commands[arguments.command]
+    if extras:
+        command_parser.error(f"unrecognized arguments: {' '.join(extras)}")
+    if getattr(arguments, "atlas_env", "") and not arguments.is_full:
+        command_parser.error("--atlas-env needs --full (the Atlas check is opt-in, like layers)")
+    return arguments
 
 
 def run(arguments: Arguments, *, console: Console) -> int:
+    if arguments.command == "explain":
+        return explain_rule(arguments.code, console=console)
+    if arguments.command == "rules":
+        return list_rules(console=console)
+    if arguments.command == "init":
+        target_dir: Path = arguments.project_dir.resolve()
+        print_path(console, command=arguments.command, project_dir=target_dir)
+        return init_project(target_dir, is_forced=arguments.is_forced, console=console)
     project_dir: Path = find_project_dir(arguments.project_dir.resolve())
     print_path(console, command=arguments.command, project_dir=project_dir)
     if arguments.command == "format":
         return format_project(project_dir, console=console)
-    return verify_project(project_dir, is_full=arguments.is_full, console=console)
+    if arguments.command == "fix":
+        return fix_project(project_dir, console=console)
+    options: VerifyOptions = VerifyOptions(
+        is_full=arguments.is_full,
+        atlas_env=arguments.atlas_env,
+        changed_base=arguments.changed_base,
+        output=arguments.output,
+    )
+    return verify_project(project_dir, options=options, console=console)
 
 
 def format_project(project_dir: Path, *, console: Console) -> int:
@@ -86,47 +106,82 @@ def format_project(project_dir: Path, *, console: Console) -> int:
     return output.exit_code
 
 
-def verify_project(project_dir: Path, *, is_full: bool, console: Console) -> int:
-    # Fail on a missing package before spending time on the slow steps.
-    package: str = detect_package(project_dir) if is_full else ""
-    modules: list[SourceModule] = load_source_modules(project_dir)
-    layer_steps: dict[str, Action] = (
-        {"layers": partial(_layers_outcome, modules=modules, package=package)} if is_full else {}
-    )
-    steps: dict[str, Action] = {
-        "format": partial(_tool_outcome, ruff_format.CHECK_COMMAND, ruff_format.parse, project_dir),
-        "lint": partial(_tool_outcome, ruff_lint.COMMAND, ruff_lint.parse, project_dir),
-        "types": partial(_tool_outcome, basedpyright.COMMAND, basedpyright.parse, project_dir),
-        "rules": partial(_rules_outcome, modules=modules),
-        **layer_steps,
-        "tests": partial(_tool_outcome, pytest.COMMAND, pytest.parse, project_dir),
-    }
-    results: list[StepResult] = [
-        _execute(name=name, action=action, console=console) for name, action in steps.items()
-    ]
-    print_findings(console, results)
-    print_summary(console, results, is_full=is_full)
-    is_passed: bool = all(step_status(result) == StepStatus.PASSED for result in results)
-    return 0 if is_passed else 1
-
-
-def _build_parser() -> argparse.ArgumentParser:
-    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+def _build_parsers() -> Parsers:
+    parser: UsageParser = UsageParser(
         prog="based8840", description="Deterministic checks for the AGENTS.md rules."
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(
+        dest="command", required=True, metavar="COMMAND", parser_class=UsageParser
+    )
     verify_parser: argparse.ArgumentParser = subparsers.add_parser(
-        "verify", help="run every check without changing files (default)"
+        "verify", help="run every check, change nothing"
     )
-    _add_project_dir(verify_parser)
-    _ = verify_parser.add_argument(
-        "-f", "--full", dest="is_full", action="store_true", help="also run opt-in layer checks"
-    )
+    _add_verify_arguments(verify_parser)
     format_parser: argparse.ArgumentParser = subparsers.add_parser(
         "format", help="format every file with ruff format"
     )
     _add_project_dir(format_parser)
-    return parser
+    fix_parser: argparse.ArgumentParser = subparsers.add_parser(
+        "fix", help="ruff check --fix, ruff format, report what is left"
+    )
+    _add_project_dir(fix_parser)
+    init_parser: argparse.ArgumentParser = subparsers.add_parser(
+        "init", help="copy the agent files into a project and merge the tool config"
+    )
+    _ = init_parser.add_argument(
+        "project_dir",
+        nargs="?",
+        type=Path,
+        default=Path(),
+        help="project directory with a pyproject.toml (default: current directory)",
+    )
+    _ = init_parser.add_argument(
+        "--force", dest="is_forced", action="store_true", help="overwrite existing files"
+    )
+    explain_parser: argparse.ArgumentParser = subparsers.add_parser(
+        "explain", help="why a rule exists, with a bad and a good example"
+    )
+    _ = explain_parser.add_argument("code", help="rule code, e.g. BC008 or PLR1702")
+    rules_parser: argparse.ArgumentParser = subparsers.add_parser(
+        "rules", help="list every rule and its AGENTS.md section"
+    )
+    return Parsers(
+        root=parser,
+        commands={
+            "verify": verify_parser,
+            "format": format_parser,
+            "fix": fix_parser,
+            "init": init_parser,
+            "explain": explain_parser,
+            "rules": rules_parser,
+        },
+    )
+
+
+def _add_verify_arguments(parser: argparse.ArgumentParser) -> None:
+    _add_project_dir(parser)
+    _ = parser.add_argument(
+        "-f", "--full", dest="is_full", action="store_true", help="also run opt-in checks"
+    )
+    _ = parser.add_argument(
+        "--atlas-env",
+        default="",
+        metavar="ENV",
+        help="with --full: run `atlas migrate validate --env ENV` (needed when atlas.hcl exists)",
+    )
+    _ = parser.add_argument(
+        "--changed",
+        dest="changed_base",
+        default="",
+        metavar="BRANCH",
+        help="only report findings in files changed against BRANCH",
+    )
+    _ = parser.add_argument(
+        "--output",
+        choices=OUTPUT_FORMATS,
+        default="text",
+        help="github: also print Actions annotations; json: JSON on stdout (default: text)",
+    )
 
 
 def _add_project_dir(parser: argparse.ArgumentParser) -> None:
@@ -137,42 +192,3 @@ def _add_project_dir(parser: argparse.ArgumentParser) -> None:
         default=Path(),
         help="project directory or any directory inside it (default: current directory)",
     )
-
-
-def _execute(*, name: str, action: Action, console: Console) -> StepResult:
-    started: float = time.perf_counter()
-    with console.status(f"Running {name}…"):
-        outcome: StepOutcome = action()
-    result: StepResult = StepResult(
-        name=name, outcome=outcome, duration_seconds=time.perf_counter() - started
-    )
-    print_step(console, result)
-    return result
-
-
-def _tool_outcome(command: Sequence[str], parse: Parser, project_dir: Path) -> StepOutcome:
-    output: CommandOutput = run_command(command, cwd=project_dir)
-    findings: list[Finding] = [
-        replace(finding, path=relative_path(str(finding.path), project_dir=project_dir))
-        for finding in parse(output)
-    ]
-    # A non-zero exit without findings means the tool itself failed: show what it printed.
-    has_crashed: bool = output.exit_code != 0 and not findings
-    return StepOutcome(
-        findings=findings,
-        error_output=output.tail(lines=ERROR_TAIL_LINES) if has_crashed else "",
-    )
-
-
-def _rules_outcome(*, modules: Sequence[SourceModule]) -> StepOutcome:
-    findings: list[Finding] = [
-        finding for module in modules for check in RULE_CHECKS for finding in check(module)
-    ]
-    return StepOutcome(findings=findings, error_output="")
-
-
-def _layers_outcome(*, modules: Sequence[SourceModule], package: str) -> StepOutcome:
-    findings: list[Finding] = [
-        finding for module in modules for finding in layers.check(module, package=package)
-    ]
-    return StepOutcome(findings=findings, error_output="")
