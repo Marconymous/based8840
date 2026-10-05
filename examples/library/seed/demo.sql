@@ -1,0 +1,33 @@
+-- Demo data: 4 shelves, 21 books (6 borrowed, 1 soft-deleted), 2 jobs.
+-- Data only; the schema comes from migrations/. Load into a freshly migrated database:
+--   atlas migrate apply --env dev && sqlite3 library.db < seed/demo.sql
+-- Regenerate from a running demo database with the commands in README.md (Demo data).
+BEGIN TRANSACTION;
+INSERT INTO shelves VALUES('fantasy','Fantasy','fantasy','2026-10-05 17:16:03.591922','2026-10-05 17:16:03.591922','b6c753abbeb54079a5623c8c4a8b1b61');
+INSERT INTO shelves VALUES('scifi','Science Fiction','science fiction','2026-10-05 17:16:03.602231','2026-10-05 17:16:03.602231','ab2ed6c1c17241218494c5e8b06b8531');
+INSERT INTO shelves VALUES('classics','Classics','literary fiction','2026-10-05 17:16:03.609489','2026-10-05 17:16:03.609489','692a7c8e56ea45cb80c25d388b61154b');
+INSERT INTO shelves VALUES('programming','Programming','non-fiction','2026-10-05 17:16:03.616376','2026-10-05 17:16:03.616376','72112f97b03c403f8a162edff3f6f48a');
+INSERT INTO books VALUES('fantasy','earthsea','A Wizard of Earthsea','Ursula K. Le Guin','A young mage learns the cost of power.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.624472','2026-10-05 17:18:18.603162',NULL,'6cb275b5afc546ef851df67734f27200');
+INSERT INTO books VALUES('fantasy','tombs-of-atuan','The Tombs of Atuan','Ursula K. Le Guin','Second Earthsea book.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.631659','2026-10-05 17:16:03.631659',NULL,'b09cf739fdb04b6ca95dff0b8eaaa6b7');
+INSERT INTO books VALUES('fantasy','hobbit','The Hobbit','J. R. R. Tolkien','There and back again.','BORROWED','bilbo@bagend.example','2026-10-19 17:16:03.773595',NULL,'2026-10-05 17:16:03.638285','2026-10-05 17:16:03.773595',NULL,'e8d09114286749c78a356ac9c4c1e851');
+INSERT INTO books VALUES('fantasy','fellowship','The Fellowship of the Ring','J. R. R. Tolkien','The first part of The Lord of the Rings.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.645071','2026-10-05 17:16:03.645071',NULL,'5cb85066600348af8297898f37a82849');
+INSERT INTO books VALUES('fantasy','name-of-the-wind','The Name of the Wind','Patrick Rothfuss','','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.651845','2026-10-05 17:16:03.651845',NULL,'a341bbde045a4edd87d3c98b1fa96194');
+INSERT INTO books VALUES('fantasy','mistborn','Mistborn: The Final Empire','Brandon Sanderson','A heist in a world of ash.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.659065','2026-10-05 17:16:03.659065',NULL,'0b8bf14291084d8087fc848de76ed4fe');
+INSERT INTO books VALUES('scifi','dune','Dune','Frank Herbert','Spice, sandworms and politics on Arrakis.','BORROWED','paul@arrakis.example','2026-10-19 17:16:03.780905',NULL,'2026-10-05 17:16:03.665912','2026-10-05 17:16:03.780905',NULL,'376375bf95ca4a03ae1b76324c4539bc');
+INSERT INTO books VALUES('scifi','left-hand-of-darkness','The Left Hand of Darkness','Ursula K. Le Guin','An envoy on the planet Gethen.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.673070','2026-10-05 17:16:03.673070',NULL,'ecd6b98f88d94d0a9205593b332ee7b0');
+INSERT INTO books VALUES('scifi','dispossessed','The Dispossessed','Ursula K. Le Guin','An ambiguous utopia.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.679959','2026-10-05 17:16:03.679959',NULL,'9c9c28760cc84b8e8dcb1ddbeaf37f54');
+INSERT INTO books VALUES('scifi','foundation','Foundation','Isaac Asimov','Psychohistory and the fall of an empire.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.686768','2026-10-05 17:16:03.686768',NULL,'433831101a0f4010ac41270c088ccf43');
+INSERT INTO books VALUES('scifi','neuromancer','Neuromancer','William Gibson','The novel that defined cyberpunk.','BORROWED','case@chiba.example','2026-10-19 17:16:03.787771',NULL,'2026-10-05 17:16:03.693350','2026-10-05 17:16:03.787771',NULL,'85dc8c3844f34ee7b394b1d322ff8437');
+INSERT INTO books VALUES('scifi','hyperion','Hyperion','Dan Simmons','Seven pilgrims, seven tales.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.699876','2026-10-05 17:16:03.699876',NULL,'1eba1a8f125349258f74840ee85f76fa');
+INSERT INTO books VALUES('scifi','project-hail-mary','Project Hail Mary','Andy Weir','','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.706353','2026-10-05 17:16:03.706353',NULL,'0fd686f92f6d46babc6c8a1eb47d72d0');
+INSERT INTO books VALUES('classics','pride-and-prejudice','Pride and Prejudice','Jane Austen','','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.712945','2026-10-05 17:16:03.712945',NULL,'1fc52ce574a64c3a8e0ccc88878ee97e');
+INSERT INTO books VALUES('classics','moby-dick','Moby-Dick','Herman Melville','Call me Ishmael.','BORROWED','ishmael@pequod.example','2026-10-19 17:16:03.794472',NULL,'2026-10-05 17:16:03.719499','2026-10-05 17:16:03.794472',NULL,'08b99725404e4996b24376d8bba723a7');
+INSERT INTO books VALUES('classics','crime-and-punishment','Crime and Punishment','Fyodor Dostoevsky','','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.726090','2026-10-05 17:16:03.726090',NULL,'d27dfaddcb00435595950a6dba0b7c38');
+INSERT INTO books VALUES('classics','middlemarch','Middlemarch','George Eliot','A study of provincial life.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.732675','2026-10-05 17:16:03.821219','2026-10-05 17:16:03.821219','d70020e624554608a22f055213780fd4');
+INSERT INTO books VALUES('programming','sicp','Structure and Interpretation of Computer Programs','Harold Abelson','','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.739267','2026-10-05 17:16:03.739267',NULL,'56c5c4105edc4e32a7fb698928b92f0f');
+INSERT INTO books VALUES('programming','pragmatic-programmer','The Pragmatic Programmer','Andrew Hunt','','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.745809','2026-10-05 17:16:03.745809',NULL,'45c392c240664b59bb5873708d6e983c');
+INSERT INTO books VALUES('programming','fluent-python','Fluent Python','Luciano Ramalho','Clear, concise and effective Python.','AVAILABLE',NULL,NULL,NULL,'2026-10-05 17:16:03.752366','2026-10-05 17:16:03.814653',NULL,'55ca5dd80f2846bdaa6c766f9c3ecaa6');
+INSERT INTO books VALUES('programming','ddia','Designing Data-Intensive Applications','Martin Kleppmann','','BORROWED','alice@example.com','2026-10-19 17:16:03.801234',NULL,'2026-10-05 17:16:03.758825','2026-10-05 17:16:03.801234',NULL,'7d2fe688bb664ff493c5090b73b1ca13');
+INSERT INTO jobs VALUES('overdue-reminders','Overdue reminders','OVERDUE_REMINDER',0,NULL,'2026-10-05 17:16:03.828838','2026-10-05 17:16:03.828838','11a0a8c316004ca5ac0cf0e9e4976160');
+INSERT INTO jobs VALUES('overdue-weekly','Weekly overdue sweep','OVERDUE_REMINDER',7,NULL,'2026-10-05 17:16:03.835361','2026-10-05 17:16:03.835361','7e35782446564e03b4dab3b977aefe3b');
+COMMIT;
