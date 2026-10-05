@@ -29,6 +29,7 @@ select = [
     "TID",     # tidy imports (banned-api)
     "FAST",    # FastAPI
     "PLR1702", # too many nested blocks (never nest)
+    "C90",     # mccabe complexity
 ]
 ignore = [
     "PLR0913",  # too many arguments: mandatory keyword-only params are preferred over defaults
@@ -42,6 +43,10 @@ ignore = [
 
 [tool.ruff.lint.pylint]
 max-nested-blocks = 2
+max-statements = 40
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
