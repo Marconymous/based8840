@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class Shelf(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     shelf_id: str
     display_name: str
@@ -17,7 +17,7 @@ class Shelf(BaseModel):
 class ShelfFields(BaseModel):
     """Client-writable fields of a shelf (create body, update body)."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     display_name: str
     genre: str
@@ -26,7 +26,7 @@ class ShelfFields(BaseModel):
 class ShelfPatch(BaseModel):
     """Update input; None means "not sent". Only fields in the update mask are applied."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     display_name: str | None
     genre: str | None

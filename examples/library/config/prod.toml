@@ -1,3 +1,4 @@
+log_format = "json"
 log_level = "INFO"
 
 [database]

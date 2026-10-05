@@ -51,6 +51,8 @@ class Settings(BaseModel):
 
     app_name: str
     log_level: str
+    log_format: Literal["json", "text"]
+    debug_errors: bool
     database: DatabaseSettings
     pagination: PaginationSettings
     library: LibrarySettings
@@ -66,7 +68,7 @@ class Secrets(BaseSettings):
 
 
 class AppConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     settings: Settings
     secrets: Secrets

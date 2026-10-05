@@ -11,7 +11,7 @@ class OperationKind(StrEnum):
 class Operation(BaseModel):
     """Long-running operation (AIP-151). Export results are flattened into optional fields."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     operation_id: str
     kind: OperationKind
@@ -25,7 +25,7 @@ class Operation(BaseModel):
 
 
 class ExportResult(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     result_path: str
     exported_count: int

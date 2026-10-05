@@ -1,3 +1,4 @@
+debug_errors = true
 log_level = "WARNING"
 
 [database]

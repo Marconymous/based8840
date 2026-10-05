@@ -4,7 +4,9 @@ Routes never build error responses: they let domain exceptions propagate to here
 """
 
 import logging
+import traceback
 from collections.abc import Mapping, Sequence
+from functools import partial
 from typing import Final
 
 from fastapi import FastAPI, Request
@@ -21,13 +23,13 @@ from app.core.errors import (
     LibraryError,
     NotFoundError,
 )
-from app.models.api.v1.error import ErrorResponse, FieldViolation, Status
+from app.models.api.v1.error import DebugInfo, ErrorResponse, FieldViolation, Status
 
 logger: Final = logging.getLogger(__name__)
 
 
 class CanonicalCode(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     http_code: int
     status: str
@@ -50,23 +52,25 @@ CODE_BY_HTTP_STATUS: Final[Mapping[int, CanonicalCode]] = {
 }
 
 
-def register_error_handlers(app: FastAPI) -> None:
+def register_error_handlers(app: FastAPI, *, debug_errors: bool) -> None:
     app.add_exception_handler(LibraryError, handle_library_error)
     app.add_exception_handler(RequestValidationError, handle_validation_error)
     app.add_exception_handler(HTTPException, handle_http_exception)
-    app.add_exception_handler(Exception, handle_unexpected_error)
+    app.add_exception_handler(
+        Exception, partial(handle_unexpected_error, debug_errors=debug_errors)
+    )
 
 
 async def handle_library_error(_request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, LibraryError):
-        return await handle_unexpected_error(_request, exc)
+        return await handle_unexpected_error(_request, exc, debug_errors=False)
     code: CanonicalCode = CODE_BY_ERROR.get(type(exc), INTERNAL)
     return error_response(code=code, message=str(exc), details=[])
 
 
 async def handle_validation_error(_request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, RequestValidationError):
-        return await handle_unexpected_error(_request, exc)
+        return await handle_unexpected_error(_request, exc, debug_errors=False)
     errors: Sequence[Mapping[str, object]] = exc.errors()
     violations: list[FieldViolation] = [_field_violation(error) for error in errors]
     return error_response(
@@ -76,20 +80,31 @@ async def handle_validation_error(_request: Request, exc: Exception) -> JSONResp
 
 async def handle_http_exception(_request: Request, exc: Exception) -> JSONResponse:
     if not isinstance(exc, HTTPException):
-        return await handle_unexpected_error(_request, exc)
+        return await handle_unexpected_error(_request, exc, debug_errors=False)
     code: CanonicalCode = CODE_BY_HTTP_STATUS.get(
         exc.status_code, CanonicalCode(http_code=exc.status_code, status="UNKNOWN")
     )
     return error_response(code=code, message=exc.detail, details=[])
 
 
-async def handle_unexpected_error(_request: Request, exc: Exception) -> JSONResponse:
+async def handle_unexpected_error(
+    _request: Request, exc: Exception, *, debug_errors: bool
+) -> JSONResponse:
+    """Always logs the stack trace; puts it in the response only when `debug_errors` is on."""
     logger.exception("Unhandled error", exc_info=exc)
-    return error_response(code=INTERNAL, message="Internal error.", details=[])
+    details: list[DebugInfo] = [debug_info(exc)] if debug_errors else []
+    return error_response(code=INTERNAL, message="Internal error.", details=details)
+
+
+def debug_info(exc: BaseException) -> DebugInfo:
+    return DebugInfo(
+        detail=f"{type(exc).__name__}: {exc}",
+        stack_entries=traceback.format_exception(exc),
+    )
 
 
 def error_response(
-    *, code: CanonicalCode, message: str, details: Sequence[FieldViolation]
+    *, code: CanonicalCode, message: str, details: Sequence[FieldViolation | DebugInfo]
 ) -> JSONResponse:
     body = ErrorResponse(
         error=Status(

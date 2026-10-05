@@ -16,7 +16,7 @@ from app.models.domain.page import PageRequest
 
 
 class PageCursor(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     offset: int
     query: str

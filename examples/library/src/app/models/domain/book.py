@@ -13,7 +13,7 @@ class BookState(StrEnum):
 
 
 class Book(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     shelf_id: str
     book_id: str
@@ -33,7 +33,7 @@ class Book(BaseModel):
 class BookFields(BaseModel):
     """Client-writable fields of a book (create body, update body)."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     title: str
     author: str
@@ -47,7 +47,7 @@ class BookOrderField(StrEnum):
 
 
 class BookOrder(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     field: BookOrderField
     descending: bool
@@ -56,14 +56,14 @@ class BookOrder(BaseModel):
 class BookFilter(BaseModel):
     """Parsed form of the supported AIP-160 subset; None means "no condition"."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     state: BookState | None
     author: str | None
 
 
 class BookQuery(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     shelf_id: str
     filter: BookFilter
@@ -75,7 +75,7 @@ class BookQuery(BaseModel):
 class BookPatch(BaseModel):
     """Update input; None means "not sent". Only fields in the update mask are applied."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     title: str | None
     author: str | None

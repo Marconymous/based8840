@@ -103,6 +103,7 @@ curl -s -XPOST "$B/jobs/overdue:run"       # dev writes reminders to notificatio
 | §2 | Caller orchestrates | `services/jobs.py` `JobService.run` (DAO → `overdue_reminder` → notifier); `api/background.py` `run_export` |
 | §2 | `base.py` + one implementation per file in `impl/` | `integrations/notifier/`, `storage/daos/` |
 | §2 | No defaults, keyword-only params | `services/*.py` constructors and methods; route signatures with `*` in `api/v1/routers/books.py` |
+| §2 | Complexity ≤ 10, ≤ 40 statements (ruff `C901`, `PLR0915`) | `pyproject.toml` `[tool.ruff.lint.mccabe]`, `[tool.ruff.lint.pylint]` |
 | §3 | Annotated call results, `Final`, read-only params | everywhere; e.g. `core/patch.py` (`Set`), `api/errors.py` (`Final` mappings) |
 | §3 | PEP 695 generics | `models/domain/page.py` `Page[T]`, `storage/daos/base.py` `to_page[T]` |
 | §3 | `Any` only with a reason | `api/dependencies.py` `get_resources` (Starlette types `app.state` as `Any`) |
@@ -110,17 +111,21 @@ curl -s -XPOST "$B/jobs/overdue:run"       # dev writes reminders to notificatio
 | §4 | `pathlib`, `logging`, aware datetimes | `services/operations.py`, `integrations/notifier/impl/log.py`, `core/clock.py`, `models/sql/types.py` (rejects naive datetimes) |
 | §4 | Max 2 nesting levels | `api/ordering.py` (`match` instead of nested `if`), `api/background.py` |
 | §4 | Bind once, frozen models, `model_copy` | `services/books.py` (`borrow`, `delete`, ...) |
-| §4 | No tuples | `api/pagination.py` `PageCursor`, `api/filtering.py` `FilterTerm`, `models/domain/operation.py` `ExportResult` |
+| §4 | No tuples in signatures | `api/pagination.py` `PageCursor`, `api/filtering.py` `FilterTerm`, `models/domain/operation.py` `ExportResult` |
 | §5 | Domain exceptions, one handler | `core/errors.py` → `api/errors.py` |
+| §5 | `debug_errors`: `DebugInfo` in non-prod 500s, generic in prod | `api/errors.py` `handle_unexpected_error`, `config/*.toml`, `tests/api/test_errors.py` |
 | §6 | TOML per env, no defaults, crash without `APP_ENV` | `config/*.toml`, `core/settings.py`, `main.py` |
 | §6 | Secrets only from env / `.env` | `core/settings.py` `Secrets`, `.env.example` |
+| §6 | Per-environment behavior is a named setting | `Settings.debug_errors`, `Settings.log_format` |
 | §7 | Layers and thin routes | `api/v1/routers/` → `services/` → `storage/daos/` |
 | §7 | ORM private to storage (ruff `TID251`) | `models/sql/` imported only by `storage/` |
 | §7 | DAO converts with `model_validate(row, from_attributes=True)` | `storage/daos/impl/*.py` |
 | §7 | Inline `Annotated[..., Depends(...)]`, no aliases | `api/dependencies.py`, every router |
 | §7 | Request-scoped transaction, DAOs only `flush()` | `storage/db/session.py` `session_scope`, `api/dependencies.py` `get_session` |
 | §7 | Atlas migrations from SQLModel metadata | `atlas.hcl`, `storage/db/schema.py`, `migrations/` |
+| §7 | Logging: JSON/text, `request_id` on every line | `core/log_setup.py`, `core/request_context.py`, `api/request_id.py` |
 | §8 | Resource names, camelCase JSON | `core/ids.py`, `models/api/v1/base.py` `ApiModel` |
+| §4 / §8 | `extra="forbid"`: unknown body fields are 400 | `models/api/v1/base.py` `ApiModel`, `tests/api/test_errors.py` |
 | §8 | Standard + custom methods | `api/v1/routers/books.py` (`:borrow`, `:return`, `:undelete`) |
 | §8 | AIP-193 errors | `api/errors.py`, `models/api/v1/error.py` |
 | §8 | Field behavior (OUTPUT_ONLY / REQUIRED) | `models/api/v1/*.py` `Field(description=...)` |

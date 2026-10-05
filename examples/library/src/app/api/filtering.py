@@ -21,7 +21,7 @@ FILTER_FIELDS: Final = frozenset({"state", "author"})
 
 
 class FilterTerm(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     field: str
     value: str

@@ -2,6 +2,9 @@
 # app.core.settings.Settings (no defaults: the merged result must be complete).
 app_name = "library"
 log_level = "INFO"
+log_format = "text"
+# true: 500 responses include a DebugInfo with the stack trace (AGENTS.md §5). Never in prod.
+debug_errors = false
 
 [database]
 url = "sqlite+aiosqlite:///./library.db"

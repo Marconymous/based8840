@@ -50,3 +50,14 @@ def test_deep_merge(
     base: dict[str, object], override: dict[str, object], expected: dict[str, object]
 ) -> None:
     assert deep_merge(base, override) == expected
+
+
+@pytest.mark.parametrize(
+    ("app_env", "debug_errors", "log_format"),
+    [("dev", True, "text"), ("test", True, "text"), ("prod", False, "json")],
+)
+def test_environment_driven_behavior(app_env: str, debug_errors: bool, log_format: str) -> None:
+    settings: Settings = load_settings(config_dir=CONFIG_DIR, app_env=app_env)
+
+    assert settings.debug_errors is debug_errors
+    assert settings.log_format == log_format

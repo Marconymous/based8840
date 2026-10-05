@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from app.api.dependencies import AppResources
 from app.api.errors import register_error_handlers
+from app.api.request_id import RequestIdMiddleware
 from app.api.v1.router import OPENAPI_TAGS
 from app.api.v1.router import router as v1_router
 from app.core.log_setup import configure_logging
@@ -14,7 +15,7 @@ from app.storage.db.session import create_engine, create_session_factory
 
 
 def create_app(config: AppConfig) -> FastAPI:
-    configure_logging(level=config.settings.log_level)
+    configure_logging(level=config.settings.log_level, log_format=config.settings.log_format)
     engine: AsyncEngine = create_engine(config.settings.database)
 
     @asynccontextmanager
@@ -27,5 +28,6 @@ def create_app(config: AppConfig) -> FastAPI:
         config=config, engine=engine, session_factory=create_session_factory(engine)
     )
     app.include_router(v1_router)
-    register_error_handlers(app)
+    app.add_middleware(RequestIdMiddleware)
+    register_error_handlers(app, debug_errors=config.settings.debug_errors)
     return app

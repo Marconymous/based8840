@@ -12,7 +12,7 @@ class JobKind(StrEnum):
 class Job(BaseModel):
     """Recurring, configurable work (AIP-152). Triggered by POST /v1/jobs/{job}:run."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     job_id: str
     display_name: str
@@ -25,7 +25,7 @@ class Job(BaseModel):
 
 
 class JobFields(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     display_name: str
     kind: JobKind
@@ -33,7 +33,7 @@ class JobFields(BaseModel):
 
 
 class JobRun(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     job_id: str
     notified_count: int
