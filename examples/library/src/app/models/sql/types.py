@@ -1,3 +1,5 @@
+"""Custom column types."""
+
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Dialect

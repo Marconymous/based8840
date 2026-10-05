@@ -1,3 +1,5 @@
+"""SQL DAO for shelves."""
+
 from collections.abc import Sequence
 
 from sqlmodel import col, delete, select

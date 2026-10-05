@@ -1,3 +1,5 @@
+"""Domain models for long-running operations."""
+
 from datetime import datetime
 from enum import StrEnum
 

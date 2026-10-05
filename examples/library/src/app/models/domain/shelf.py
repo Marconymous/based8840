@@ -1,3 +1,5 @@
+"""Domain models for shelves."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict

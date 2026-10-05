@@ -1,3 +1,5 @@
+"""Domain models for books."""
+
 from datetime import datetime
 from enum import StrEnum
 
@@ -41,9 +43,9 @@ class BookFields(BaseModel):
 
 
 class BookOrderField(StrEnum):
-    CREATE_TIME = "create_time"
-    TITLE = "title"
-    AUTHOR = "author"
+    CREATE_TIME = "CREATE_TIME"
+    TITLE = "TITLE"
+    AUTHOR = "AUTHOR"
 
 
 class BookOrder(BaseModel):

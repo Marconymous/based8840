@@ -1,3 +1,5 @@
+"""API tests for books."""
+
 from uuid import uuid4
 
 import pytest

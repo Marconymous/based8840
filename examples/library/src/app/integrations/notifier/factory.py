@@ -1,3 +1,5 @@
+"""Builds the notifier implementation selected in settings."""
+
 from app.core.settings import NotifierSettings
 from app.integrations.notifier.base import Notifier
 from app.integrations.notifier.impl.file import FileNotifier

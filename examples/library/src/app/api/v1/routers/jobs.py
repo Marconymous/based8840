@@ -1,3 +1,5 @@
+"""HTTP routes for jobs, including the `:run` custom method."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query

@@ -1,3 +1,5 @@
+"""Domain models for paginated List requests and results."""
+
 from pydantic import BaseModel, ConfigDict
 
 

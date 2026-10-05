@@ -1,3 +1,5 @@
+"""Tests for page token encoding and decoding."""
+
 from typing import Final
 
 import pytest

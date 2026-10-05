@@ -1,3 +1,5 @@
+"""Business logic for long-running operations."""
+
 import asyncio
 import json
 from collections.abc import Sequence

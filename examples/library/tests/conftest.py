@@ -1,3 +1,5 @@
+"""Shared pytest fixtures."""
+
 from collections.abc import AsyncIterator
 from pathlib import Path
 

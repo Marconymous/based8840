@@ -1,0 +1,92 @@
+[project]
+name = "based8840"
+version = "0.1.0"
+description = "Runs the deterministic AGENTS.md checks and prints one report."
+requires-python = ">=3.12"
+dependencies = [
+    "rich>=15.0.0",
+]
+
+[project.scripts]
+based8840 = "based8840.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/based8840"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+preview = true                  # needed for PLR1702 (too-many-nested-blocks)
+explicit-preview-rules = true   # only preview rules selected by full code are enabled
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "N",       # pep8-naming
+    "UP",      # pyupgrade
+    "B",       # bugbear
+    "SIM",     # simplify
+    "C4",      # comprehensions
+    "RET",     # return
+    "ARG",     # unused arguments
+    "PTH",     # pathlib over os.path
+    "PL",      # pylint
+    "PT",      # pytest style
+    "RUF",     # ruff-specific
+    "ANN",     # type annotations (ANN401 bans Any)
+    "ASYNC",   # blocking calls in async code
+    "TID",     # tidy imports (banned-api)
+    "PLR1702", # too many nested blocks (never nest)
+    "C90",     # mccabe complexity
+    "DTZ",     # timezone-aware datetimes only
+    "T20",     # no print, use logging
+    "BLE",     # no blind except Exception
+    "S110",    # no try/except/pass
+    "PGH",     # no blanket type: ignore / noqa
+    "D100",    # module docstring
+]
+ignore = [
+    "PLR0913",  # too many arguments: mandatory keyword-only params are preferred over defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "PLR2004", "ARG001"]
+
+[tool.ruff.lint.pylint]
+max-nested-blocks = 2
+max-statements = 40
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"asyncio.gather".msg = "Use asyncio.TaskGroup instead."
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+include = ["src", "tests"]
+typeCheckingMode = "standard"
+reportAny = "error"
+reportExplicitAny = "error"
+reportIgnoreCommentWithoutRule = "error"
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.40.2",
+    "pytest>=9.1.1",
+    "ruff>=0.16.10",
+]

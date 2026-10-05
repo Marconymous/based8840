@@ -1,3 +1,5 @@
+"""HTTP routes for books: schema to domain, one service call, domain to schema."""
+
 from typing import Annotated, Final
 from uuid import UUID
 

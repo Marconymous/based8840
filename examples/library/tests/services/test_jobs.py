@@ -1,3 +1,5 @@
+"""Service tests for jobs with a fake DAO."""
+
 from datetime import UTC, datetime, timedelta
 from typing import Final
 

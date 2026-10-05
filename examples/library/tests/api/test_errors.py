@@ -1,3 +1,5 @@
+"""API tests for the AIP-193 error responses."""
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 

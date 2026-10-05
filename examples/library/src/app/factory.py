@@ -1,3 +1,5 @@
+"""App factory: builds the FastAPI app, its lifespan, routers and error handlers."""
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 

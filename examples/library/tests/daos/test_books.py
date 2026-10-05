@@ -1,3 +1,5 @@
+"""DAO tests for books against a migrated SQLite database."""
+
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from typing import Final

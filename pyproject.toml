@@ -30,6 +30,12 @@ select = [
     "FAST",    # FastAPI
     "PLR1702", # too many nested blocks (never nest)
     "C90",     # mccabe complexity
+    "DTZ",     # timezone-aware datetimes only
+    "T20",     # no print, use logging
+    "BLE",     # no blind except Exception
+    "S110",    # no try/except/pass
+    "PGH",     # no blanket type: ignore / noqa
+    "D100",    # module docstring
 ]
 ignore = [
     "PLR0913",  # too many arguments: mandatory keyword-only params are preferred over defaults
@@ -53,6 +59,7 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "app.models.sql".msg = "ORM models are private to storage/. Use DAOs and models.domain instead."
+"asyncio.gather".msg = "Use asyncio.TaskGroup instead."
 
 [tool.basedpyright]
 pythonVersion = "3.12"
@@ -60,6 +67,7 @@ include = ["src", "tests"]
 typeCheckingMode = "standard"
 reportAny = "error"
 reportExplicitAny = "error"
+reportIgnoreCommentWithoutRule = "error"
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"

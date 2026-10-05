@@ -1,3 +1,5 @@
+"""SQL DAO for long-running operations."""
+
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.domain.operation import Operation

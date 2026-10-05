@@ -1,3 +1,5 @@
+"""Notifier that writes notifications to the log."""
+
 import logging
 from typing import Final
 

@@ -1,3 +1,5 @@
+"""Notifier interface."""
+
 from typing import Protocol
 
 from app.models.domain.notification import Notification

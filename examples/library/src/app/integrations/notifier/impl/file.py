@@ -1,3 +1,5 @@
+"""Notifier that appends notifications as JSON lines to a file."""
+
 import asyncio
 from pathlib import Path
 

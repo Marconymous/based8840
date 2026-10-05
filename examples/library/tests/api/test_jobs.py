@@ -1,3 +1,5 @@
+"""API tests for jobs."""
+
 import asyncio
 from pathlib import Path
 

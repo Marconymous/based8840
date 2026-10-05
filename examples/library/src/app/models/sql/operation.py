@@ -1,3 +1,5 @@
+"""ORM table for long-running operations."""
+
 from datetime import datetime
 
 from sqlmodel import Field, SQLModel

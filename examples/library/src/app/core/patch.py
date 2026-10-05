@@ -1,3 +1,5 @@
+"""Applies an update mask to a partial model (AIP-134)."""
+
 from collections.abc import Set
 
 from pydantic import BaseModel

@@ -1,3 +1,5 @@
+"""Empty response body."""
+
 from app.models.api.v1.base import ApiModel
 
 

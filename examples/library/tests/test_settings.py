@@ -1,3 +1,5 @@
+"""Tests for config loading."""
+
 from pathlib import Path
 
 import pytest

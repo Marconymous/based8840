@@ -1,3 +1,5 @@
+"""SQL DAO for jobs."""
+
 from collections.abc import Sequence
 
 from sqlmodel import col, select

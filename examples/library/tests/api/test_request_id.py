@@ -1,3 +1,5 @@
+"""API tests for the X-Request-Id middleware."""
+
 import re
 
 import pytest

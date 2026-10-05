@@ -12,8 +12,10 @@ project_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
 command -v uv >/dev/null 2>&1 || exit 0
 
 # Every project (pyproject.toml with a [project] table) in the repo, e.g. the root or examples/*.
+# examples/violations is broken on purpose (based8840 demo), so it is skipped.
 projects="$(find "$project_dir" -maxdepth 3 -name pyproject.toml \
   -not -path '*/.venv/*' -not -path '*/node_modules/*' \
+  -not -path '*/examples/violations/*' \
   -exec grep -l '^\[project\]' {} + 2>/dev/null || true)"
 
 failed=0

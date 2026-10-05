@@ -1,3 +1,5 @@
+"""Domain models for jobs."""
+
 from datetime import datetime
 from enum import StrEnum
 

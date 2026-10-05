@@ -1,3 +1,5 @@
+"""Async engine, session factory and the transaction scope (commit or roll back)."""
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 

@@ -1,3 +1,5 @@
+"""Mounts every v1 resource router under /v1."""
+
 from typing import Final
 
 from fastapi import APIRouter

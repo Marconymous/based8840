@@ -1,3 +1,5 @@
+"""Test helpers."""
+
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Final

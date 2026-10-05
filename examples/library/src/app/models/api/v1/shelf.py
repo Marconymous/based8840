@@ -1,3 +1,5 @@
+"""v1 API schemas for shelves."""
+
 from datetime import datetime
 from typing import Self
 

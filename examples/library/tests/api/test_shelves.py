@@ -1,3 +1,5 @@
+"""API tests for shelves."""
+
 from httpx import AsyncClient
 
 from app.models.api.v1.shelf import ListShelvesResponse, ShelfResponse

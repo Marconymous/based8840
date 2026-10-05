@@ -90,7 +90,7 @@ def _merge_value(*, base_value: object, override_value: object) -> object:
     return override_value
 
 
-def _as_table(value: dict[object, object]) -> dict[str, object]:
+def _as_table(value: Mapping[object, object]) -> dict[str, object]:
     # TOML table keys are always strings.
     return {str(key): item for key, item in value.items()}
 

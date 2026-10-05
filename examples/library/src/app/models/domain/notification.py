@@ -1,3 +1,5 @@
+"""Domain model for a notification."""
+
 from pydantic import BaseModel, ConfigDict
 
 

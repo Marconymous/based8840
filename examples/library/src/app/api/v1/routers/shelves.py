@@ -1,3 +1,5 @@
+"""HTTP routes for shelves: schema to domain, one service call, domain to schema."""
+
 from typing import Annotated, Final
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query

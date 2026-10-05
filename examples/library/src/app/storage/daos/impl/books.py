@@ -1,3 +1,5 @@
+"""SQL DAO for books."""
+
 from collections.abc import Sequence
 from datetime import datetime
 

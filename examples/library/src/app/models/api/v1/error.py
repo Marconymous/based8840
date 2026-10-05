@@ -1,3 +1,5 @@
+"""v1 AIP-193 error response schemas."""
+
 from pydantic import Field
 
 from app.models.api.v1.base import ApiModel

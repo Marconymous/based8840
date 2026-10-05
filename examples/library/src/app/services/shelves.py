@@ -1,3 +1,5 @@
+"""Business logic for shelves."""
+
 from collections.abc import Set
 from datetime import datetime
 

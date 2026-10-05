@@ -18,6 +18,9 @@ uv run ruff format               # format
 uv run ruff check --fix          # lint
 uv run basedpyright              # type check
 uv run pytest -q                 # tests
+based8840 verify                 # all of the above (no formatting) + AGENTS.md rule checks, one report
+based8840 verify --full          # also the opt-in layer checks (§7)
+based8840 format                 # ruff format only
 APP_ENV=dev uv run fastapi dev src/app/main.py
 
 atlas migrate diff <name> --env <env>   # generate migration from SQLModel metadata

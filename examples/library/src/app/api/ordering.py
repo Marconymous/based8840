@@ -24,10 +24,9 @@ def _parse_order(part: str) -> BookOrder:
 
 
 def _parse_field(name: str) -> BookOrderField:
-    try:
-        return BookOrderField(name)
-    except ValueError as e:
-        supported: str = ", ".join(field.value for field in BookOrderField)
-        raise InvalidArgumentError(
-            f"Unsupported orderBy field {name!r}. Supported: {supported}."
-        ) from e
+    # orderBy names fields in snake_case (AIP-132); enum members are their UPPER_SNAKE form.
+    fields: dict[str, BookOrderField] = {field.value.lower(): field for field in BookOrderField}
+    if name not in fields:
+        supported: str = ", ".join(fields)
+        raise InvalidArgumentError(f"Unsupported orderBy field {name!r}. Supported: {supported}.")
+    return fields[name]

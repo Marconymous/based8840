@@ -1,3 +1,5 @@
+"""HTTP routes for long-running operations (AIP-151)."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path

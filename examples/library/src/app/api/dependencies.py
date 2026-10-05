@@ -30,7 +30,7 @@ from app.storage.db.session import session_scope
 class AppResources(BaseModel):
     """Everything built once at startup (see app/factory.py)."""
 
-    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+    model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
 
     config: AppConfig
     engine: AsyncEngine

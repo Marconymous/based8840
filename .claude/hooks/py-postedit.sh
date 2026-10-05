@@ -7,6 +7,8 @@ file_path="$(jq -r '.tool_input.file_path // empty')"
 
 [[ "$file_path" == *.py ]] || exit 0
 [[ -f "$file_path" ]] || exit 0
+# Broken on purpose (based8840 demo): do not auto-fix it.
+[[ "$file_path" == */examples/violations/* ]] && exit 0
 command -v uv >/dev/null 2>&1 || exit 0
 
 # Run inside the nearest project (pyproject.toml with a [project] table) so uv finds its tools.

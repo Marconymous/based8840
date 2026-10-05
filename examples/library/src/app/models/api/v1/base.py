@@ -1,3 +1,5 @@
+"""Base class for all v1 API schemas: camelCase on the wire, frozen, no unknown fields."""
+
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 

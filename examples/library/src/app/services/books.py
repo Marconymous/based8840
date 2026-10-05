@@ -1,3 +1,5 @@
+"""Business logic for books."""
+
 from collections.abc import Set
 from datetime import datetime, timedelta
 
