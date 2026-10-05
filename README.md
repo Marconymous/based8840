@@ -67,3 +67,7 @@ env "dev" {
 - `py-stop.sh` (Stop): runs `basedpyright` in every project (`pyproject.toml` with `[project]`, up to 3 levels deep, e.g. the repo root or `examples/*`). Errors block the turn once; `stop_hook_active` prevents an endless loop.
 
 Both exit silently when `uv` is missing or the file is not Python. Tests are not run in hooks (too slow); `AGENTS.md` requires the agent to run them.
+
+## License
+
+[MIT](LICENSE)
