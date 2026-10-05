@@ -5,6 +5,7 @@ description = "Runs the deterministic AGENTS.md checks and prints one report."
 requires-python = ">=3.12"
 dependencies = [
     "rich>=15.0.0",
+    "tomlkit>=0.15.1",
 ]
 
 [project.scripts]
@@ -16,6 +17,17 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/based8840"]
+
+# `init` and the config check need the reference files from the repo root; bundle them so an
+# installed tool is self-contained. Editable installs read them from the repo root instead
+# (see reference.py). Build the wheel straight from this directory (`uv build --wheel`,
+# `uv tool install`): a wheel built from an sdist cannot reach ../../.
+[tool.hatch.build.targets.wheel.force-include]
+"../../AGENTS.md" = "based8840/reference/AGENTS.md"
+"../../CLAUDE.md" = "based8840/reference/CLAUDE.md"
+"../../pyproject.toml" = "based8840/reference/pyproject.toml"
+"../../.claude/settings.json" = "based8840/reference/.claude/settings.json"
+"../../.claude/hooks" = "based8840/reference/.claude/hooks"
 
 [tool.ruff]
 line-length = 100
@@ -43,6 +55,7 @@ select = [
     "ANN",     # type annotations (ANN401 bans Any)
     "ASYNC",   # blocking calls in async code
     "TID",     # tidy imports (banned-api)
+    "FAST",    # FastAPI
     "PLR1702", # too many nested blocks (never nest)
     "C90",     # mccabe complexity
     "DTZ",     # timezone-aware datetimes only
@@ -70,6 +83,7 @@ max-complexity = 10
 ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
+"app.models.sql".msg = "ORM models are private to storage/. Use DAOs and models.domain instead."
 "asyncio.gather".msg = "Use asyncio.TaskGroup instead."
 
 [tool.basedpyright]

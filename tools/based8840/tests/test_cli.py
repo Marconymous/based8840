@@ -12,15 +12,16 @@ from based8840.sections import section_for
 @pytest.mark.parametrize(
     ("argv", "command", "project_dir", "is_full"),
     [
-        ([], "verify", Path(), False),
-        (["-f"], "verify", Path(), True),
-        (["examples/library"], "verify", Path("examples/library"), False),
+        (["verify"], "verify", Path(), False),
+        (["verify", "-f"], "verify", Path(), True),
         (["verify", "--full", "x"], "verify", Path("x"), True),
         (["format"], "format", Path(), False),
         (["format", "x"], "format", Path("x"), False),
+        (["fix", "x"], "fix", Path("x"), False),
+        (["init", "x"], "init", Path("x"), False),
     ],
 )
-def test_parse_arguments_defaults_to_verify(
+def test_parse_arguments_reads_command_and_directory(
     argv: list[str], command: str, project_dir: Path, is_full: bool
 ) -> None:
     arguments: Arguments = parse_arguments(argv)
@@ -29,9 +30,43 @@ def test_parse_arguments_defaults_to_verify(
     assert getattr(arguments, "is_full", False) == is_full
 
 
-def test_format_takes_no_full_flag() -> None:
-    with pytest.raises(SystemExit):
-        _ = parse_arguments(["format", "--full"])
+def test_parse_arguments_reads_verify_options() -> None:
+    arguments: Arguments = parse_arguments(
+        ["verify", "-f", "--atlas-env", "dev", "--changed", "main", "--output", "json"]
+    )
+    assert arguments.atlas_env == "dev"
+    assert arguments.changed_base == "main"
+    assert arguments.output == "json"
+
+
+def test_parse_arguments_reads_explain_code_and_init_force() -> None:
+    assert parse_arguments(["explain", "BC008"]).code == "BC008"
+    assert parse_arguments(["init", "--force"]).is_forced
+
+
+@pytest.mark.parametrize(
+    ("argv", "usage"),
+    [
+        ([], "usage: based8840 [-h] COMMAND"),
+        (["-f"], "usage: based8840 [-h] COMMAND"),
+        (["examples/library"], "usage: based8840 [-h] COMMAND"),
+        (["verify", "--bogus"], "usage: based8840 verify"),
+        (["verify", "--atlas-env", "dev"], "usage: based8840 verify"),
+        (["verify", "--output", "xml"], "usage: based8840 verify"),
+        (["format", "--full"], "usage: based8840 format"),
+        (["fix", "--changed", "main"], "usage: based8840 fix"),
+        (["explain"], "usage: based8840 explain"),
+    ],
+)
+def test_misuse_prints_full_usage(
+    argv: list[str], usage: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit) as raised:
+        _ = parse_arguments(argv)
+    stderr: str = capsys.readouterr().err
+    assert raised.value.code == 2
+    assert stderr.startswith(usage)
+    assert "error:" in stderr
 
 
 @pytest.mark.parametrize(
@@ -42,6 +77,9 @@ def test_format_takes_no_full_flag() -> None:
         ("ANN001", "§3 Typing"),
         ("BL001", "§7 Layer rules"),
         ("reportAny", "§3 No Any"),
+        ("BC008", "§4 Bind each name once"),
+        ("BD003", "§10 Never weaken lint config"),
+        ("FAST001", ""),
         ("E501", ""),
     ],
 )

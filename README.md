@@ -24,15 +24,26 @@ Edit only `AGENTS.md`; the other instruction files follow it.
 Runs every rule from `AGENTS.md` that a tool can check, and prints one report with each finding tagged by the `AGENTS.md` section it breaks.
 
 ```sh
-based8840                     # same as `based8840 verify`
-based8840 verify [DIR]        # ruff format --check, ruff check, basedpyright, AST rules, pytest
-based8840 verify -f [DIR]     # also the opt-in layer checks (--full)
+based8840 verify [DIR]        # ruff format --check, ruff check, basedpyright, config drift, AST rules, pytest
+based8840 verify -f [DIR]     # also the opt-in checks (--full): layers, and Atlas with --atlas-env
+based8840 verify -f --atlas-env dev   # Atlas: `atlas migrate validate --env dev` (required when atlas.hcl exists)
+based8840 verify --changed main       # only findings in files changed against main (and untracked files)
+based8840 verify --output github      # also print GitHub Actions annotations (inline PR comments)
+based8840 verify --output json        # JSON report on stdout, progress on stderr
+based8840 fix [DIR]           # ruff check --fix, then ruff format, then report what still needs a manual fix
 based8840 format [DIR]        # ruff format, nothing else
+based8840 init [DIR] [--force]        # adopt the setup in a project (see below)
+based8840 explain BC008       # why a rule exists, its AGENTS.md section, a bad and a good example
+based8840 rules               # every rule code and its AGENTS.md section
 ```
 
-`DIR` defaults to the current directory; the nearest parent with a `pyproject.toml` `[project]` table is checked. `verify` never changes files: unformatted code is reported as a warning. Exit code 0 when everything passes, 1 on any finding, 2 on usage errors.
+`DIR` defaults to the current directory; the nearest parent with a `pyproject.toml` `[project]` table is checked. `verify` never changes files: unformatted code is reported as a warning. Exit code 0 when everything passes, 1 on any finding, 2 on usage errors. Running `based8840` without a command, or with a wrong flag, prints the usage.
+
+CI: [`.github/workflows/verify.yml`](.github/workflows/verify.yml) runs `based8840 verify --full --output github` on `tools/based8840` and `examples/library` (with `--atlas-env dev`) for every push to `main` and every pull request, so findings appear inline on the PR.
 
 ruff, basedpyright and pytest run through `uv run` inside the target project, so its own pinned versions and config are used.
+
+`--changed BRANCH` runs ruff and the AST rules only on the changed files, runs basedpyright on the whole project (cross-file errors) and keeps only findings in changed files. Tests, config drift and Atlas always cover the whole project.
 
 On top of ruff and basedpyright, `verify` checks with Python's `ast` (only in `src/`):
 
@@ -52,6 +63,19 @@ On top of ruff and basedpyright, `verify` checks with Python's `ast` (only in `s
 
 Layer checks need exactly one package under `src/`. The report ends with the rules that still need a human reviewer.
 
+The `config` step compares the project's ruff and basedpyright config with this repo's reference `pyproject.toml`, so "never weaken lint config" (§10) is checked instead of trusted. It reads `ruff.toml` / `.ruff.toml` and `pyrightconfig.json` when they exist, otherwise `pyproject.toml`.
+
+| Code | Rule | AGENTS.md |
+|---|---|---|
+| BD001 | Every reference rule is selected (`F` does not cover `FAST`; `PL` covers `PLR1702`) | §10 |
+| BD002 | No ignores, per-file ignores or excludes the reference does not have | §10 |
+| BD003 | Complexity, nesting and statement limits not raised (or left at ruff's looser default) | §10 |
+| BD004 | `preview` on, `ban-relative-imports = "all"`, banned-api entries present (`<package>.models.sql` matches any package) | §10 |
+| BD005 | basedpyright `typeCheckingMode` not lower, `reportAny` and friends stay `"error"` | §10 |
+| BA001 | `--full --atlas-env ENV`: `atlas migrate validate` passes (atlas.sum matches, migrations replay) | §7 |
+
+`based8840 explain <CODE>` shows the rationale and examples for each of these.
+
 Install:
 
 ```sh
@@ -59,6 +83,8 @@ uv tool install ./tools/based8840                    # puts `based8840` on PATH
 uvx --from ./tools/based8840 based8840 verify        # one-off run
 uv run --project tools/based8840 based8840 verify examples/library   # inside this repo
 ```
+
+The wheel bundles the reference files (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `pyproject.toml`) that `init` and the `config` step use, so build it from `tools/based8840` directly (`uv tool install`, `uv build --wheel`), not from an sdist. Reinstall after changing them.
 
 ## Prerequisites
 
@@ -71,12 +97,12 @@ Dev dependencies in the target project: `uv add --dev ruff basedpyright pytest p
 ## Adopt in a project
 
 ```sh
-cp -a AGENTS.md CLAUDE.md .github .claude /path/to/project/
+based8840 init /path/to/project
 ```
 
-`cp -a` keeps the symlink. Then merge the `[tool.*]` sections of `pyproject.toml` into the project's `pyproject.toml`.
+`init` copies `AGENTS.md`, `CLAUDE.md` and `.claude/` (hooks stay executable), creates the `.github/copilot-instructions.md` symlink, and merges the reference `[tool.*]` sections into the project's `pyproject.toml`: missing tables and keys are added, rule lists are unioned, values the project already sets are kept and listed (the `config` step then flags any that are weaker). Comments and layout are preserved. If the project has one package under `src/`, the `src/app` globs and the `app.models.sql` ban are renamed to it.
 
-The banned-import rule assumes the package is `src/app`. Rename `app` in `[tool.ruff.lint.flake8-tidy-imports.banned-api]` and the per-file-ignores if your package is named differently.
+`init` stops without writing anything if any of the copied files already exist; `--force` overwrites them. It ends by printing the `uv add --dev ...` line to run.
 
 ## Atlas
 

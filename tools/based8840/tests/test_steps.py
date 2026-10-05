@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from based8840.findings import Finding, Severity
-from based8840.steps import basedpyright, pytest, ruff_format, ruff_lint
+from based8840.steps import atlas, basedpyright, pytest, ruff_format, ruff_lint
 from based8840.steps.command import CommandOutput, relative_path
 
 
@@ -86,3 +86,19 @@ def test_relative_path_shortens_paths_inside_the_project(tmp_path: Path) -> None
 def test_command_output_tail_keeps_the_last_lines() -> None:
     command_output = CommandOutput(exit_code=1, stdout="a\nb\nc", stderr="d")
     assert command_output.tail(lines=2) == "c\nd"
+
+
+def test_atlas_passes_on_exit_zero() -> None:
+    assert atlas.parse(output("", exit_code=0)) == []
+
+
+def test_atlas_reports_the_error_line_first() -> None:
+    failed = CommandOutput(
+        exit_code=1,
+        stdout="You have a checksum error.\n\n\tL3: 2_x.sql was added\n",
+        stderr="Error: checksum mismatch\n",
+    )
+    findings: list[Finding] = atlas.parse(failed)
+    assert [(f.code, f.path) for f in findings] == [("BA001", Path("atlas.hcl"))]
+    assert findings[0].message.splitlines()[0] == "checksum mismatch"
+    assert "2_x.sql was added" in findings[0].message

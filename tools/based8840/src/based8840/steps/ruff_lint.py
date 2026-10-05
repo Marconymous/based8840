@@ -10,6 +10,8 @@ from based8840.steps.json_values import as_int, as_list, as_mapping, as_str, loa
 
 # --no-fix: verify never changes files, even when the project sets `fix = true`.
 COMMAND: Final = ["uv", "run", "--quiet", "ruff", "check", "--no-fix", "--output-format", "json"]
+# Used by `based8840 fix`; what is left afterwards is reported with COMMAND.
+FIX_COMMAND: Final = ["uv", "run", "--quiet", "ruff", "check", "--fix", "--quiet"]
 
 
 def parse(output: CommandOutput) -> list[Finding]:
