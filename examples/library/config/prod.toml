@@ -1,0 +1,7 @@
+log_level = "INFO"
+
+[database]
+url = "sqlite+aiosqlite:////var/lib/library/library.db"
+
+[library]
+export_dir = "/var/lib/library/exports"

@@ -1,0 +1,20 @@
+# Shared non-secret settings. Deep-merged with config/<APP_ENV>.toml, then validated by
+# app.core.settings.Settings (no defaults: the merged result must be complete).
+app_name = "library"
+log_level = "INFO"
+
+[database]
+url = "sqlite+aiosqlite:///./library.db"
+echo = false
+
+[pagination]
+default_page_size = 25
+max_page_size = 100
+
+[library]
+loan_days = 14
+export_dir = "exports"
+
+[notifier]
+kind = "log"
+file_path = "notifications.jsonl"
