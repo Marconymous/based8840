@@ -1,0 +1,62 @@
+# Reference tool configuration. Merge the [tool.*] sections into your project's pyproject.toml.
+# Assumes a src layout with the package at src/app.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+preview = true                  # needed for PLR1702 (too-many-nested-blocks)
+explicit-preview-rules = true   # only preview rules selected by full code are enabled
+select = [
+    "E", "W",  # pycodestyle
+    "F",       # pyflakes
+    "I",       # isort
+    "N",       # pep8-naming
+    "UP",      # pyupgrade
+    "B",       # bugbear
+    "SIM",     # simplify
+    "C4",      # comprehensions
+    "RET",     # return
+    "ARG",     # unused arguments
+    "PTH",     # pathlib over os.path
+    "PL",      # pylint
+    "PT",      # pytest style
+    "RUF",     # ruff-specific
+    "ANN",     # type annotations (ANN401 bans Any)
+    "ASYNC",   # blocking calls in async code
+    "TID",     # tidy imports (banned-api)
+    "FAST",    # FastAPI
+    "PLR1702", # too many nested blocks (never nest)
+]
+ignore = [
+    "PLR0913",  # too many arguments: mandatory keyword-only params are preferred over defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+# ORM table classes may only be imported by the storage layer and by each other.
+"src/app/storage/**" = ["TID251"]
+"src/app/models/sql/**" = ["TID251"]
+"tests/**" = ["ANN", "PLR2004", "ARG001"]
+
+[tool.ruff.lint.pylint]
+max-nested-blocks = 2
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"app.models.sql".msg = "ORM models are private to storage/. Use DAOs and models.domain instead."
+
+[tool.basedpyright]
+pythonVersion = "3.12"
+include = ["src", "tests"]
+typeCheckingMode = "standard"
+reportAny = "error"
+reportExplicitAny = "error"
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+asyncio_mode = "auto"
+testpaths = ["tests"]
